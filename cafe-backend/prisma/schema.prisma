@@ -1,0 +1,528 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderManagementType {
+  TABLE_BASED
+  COUNTER_BASED
+  BOTH
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  cafeName  String
+  contactNumber       String?
+  province            String?
+  district            String?
+  location            String?
+  brandPrimaryColor   String?
+  brandSecondaryColor String?
+  orderManagementType OrderManagementType?
+  panNumber           String?
+  planType            PlanType?
+  /// End of currently active trial/paid period for quick checks.
+  currentSubscriptionEnd DateTime?
+  createdAt DateTime @default(now())
+
+  users     User[]
+  branches  Branch[]
+  categories MenuCategory[]
+  items     MenuItem[]
+  orders    Order[]
+  areas     Area[]
+  tables    Table[]
+  combos    Combo[]
+  customers Customer[]
+  discounts Discount[]
+  creditTransactions CreditTransaction[]
+  vendors   Vendor[]
+  inventoryProducts InventoryProduct[]
+  subscriptions Subscription[]
+}
+
+model Branch {
+  id                   String               @id @default(uuid())
+  tenantId             String
+  name                 String   // branch location/name e.g. "Lazimpat"
+  location             String?
+  province             String?
+  district             String?
+  contactNumber       String?
+  branchOwnerId       String   @unique
+  orderManagementType OrderManagementType? // branch-level; falls back to tenant if null
+  createdAt            DateTime @default(now())
+  isActive             Boolean  @default(true)
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branchOwner User   @relation("BranchOwner", fields: [branchOwnerId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  categories  MenuCategory[]
+  items       MenuItem[]
+  areas       Area[]
+  tables      Table[]
+  combos      Combo[]
+  customers   Customer[]
+  discounts   Discount[]
+  vendors     Vendor[]
+  inventoryProducts InventoryProduct[]
+}
+
+enum PlanType {
+  TRIAL
+  PAID
+}
+
+enum SubscriptionStatus {
+  PENDING_PAYMENT
+  /// Manual payment submitted by cafe, waiting for admin review.
+  PENDING_VERIFICATION
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  REJECTED
+}
+
+model SubscriptionPlan {
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  price        Float      // in NPR
+  durationDays Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id             String             @id @default(uuid())
+  tenantId       String
+  planId         String
+  status         SubscriptionStatus @default(PENDING_VERIFICATION)
+  /// When the subscription was activated by an admin.
+  startsAt       DateTime?
+  /// Next billing/renewal date. Used for access checks.
+  endsAt         DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  /// Legacy gateway identifier (kept for forward compatibility).
+  gateway        String             @default("MANUAL_QR")
+  /// Payment method used for this subscription (e.g. ESEWA_QR).
+  paymentMethod  SubscriptionPaymentMethod?
+  /// Raw transaction reference provided by the cafe (e.g. eSewa transaction id).
+  transactionId  String?
+  /// Amount paid by the cafe for this subscription.
+  paidAmount     Float?
+  /// Optional URL to payment screenshot or attachment.
+  screenshotUrl  String?
+  /// Admin user who approved/rejected this subscription.
+  approvedById   String?
+  /// Optional human-readable reason when a subscription is rejected.
+  rejectionNote  String?
+  /// Legacy gateway integration fields (kept for compatibility if needed later).
+  esewaPid       String?
+  esewaRefId     String?
+  rawGatewayData Json?
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+  approvedBy User?        @relation("SubscriptionApprovedBy", fields: [approvedById], references: [id])
+
+  @@index([tenantId, endsAt])
+  @@index([tenantId, status, endsAt])
+}
+
+enum SubscriptionPaymentMethod {
+  ESEWA_QR
+  ESEWA_GATEWAY
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  tenantId           String
+  name               String
+  email              String   @unique
+  password           String
+  role               UserRole
+  branchId           String?  @unique
+  contactNumber      String?
+  panNumber          String?
+  citizenshipNumber  String?
+  salary             Float?
+  shiftStart         String?
+  shiftEnd           String?
+  mustChangePassword Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  tenant                Tenant        @relation(fields: [tenantId], references: [id])
+  branch                Branch?       @relation("BranchOwner")
+  orders                Order[]       @relation("OrderCreator")
+  approvedSubscriptions Subscription[] @relation("SubscriptionApprovedBy")
+}
+
+enum UserRole {
+  OWNER
+  BRANCH_OWNER
+  STAFF
+  ADMIN
+}
+
+model MenuCategory {
+  id        String   @id @default(uuid())
+  tenantId  String
+  branchId  String?
+  name      String
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  items  MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  tenantId    String
+  branchId    String?
+  categoryId  String
+  name        String
+  price       Float
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+
+  tenant   Tenant       @relation(fields: [tenantId], references: [id])
+  branch   Branch?      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  category MenuCategory @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  inventoryUsages MenuItemInventoryUsage[]
+}
+
+model OrderSequence {
+  id               String   @id @default(uuid())
+  tenantId         String
+  branchKey        String   @default("") // "" for tenant-level, branchId for branch-specific
+  lastOrderNumber  Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  @@unique([tenantId, branchKey], name: "tenantId_branchKey")
+}
+
+model Order {
+  id                String   @id @default(uuid())
+  tenantId          String
+  branchId          String?
+  orderNumber       Int
+  totalAmount       Float
+  paymentMode       PaymentMode
+  orderType         OrderType @default(TAKEAWAY)
+  tableId           String?
+  counterNumber     String?  // identifies customer when cafe is counter-based (e.g. "1", "A1", "Window 2")
+  note              String?
+  customerName      String?
+  customerPhone     String?
+  deliveryAddress   String?
+  status       OrderStatus @default(PENDING)
+  discount     Float?
+  paymentType  PaymentType?
+  payments     Json?
+  completedAt  DateTime?
+  createdById  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy User   @relation("OrderCreator", fields: [createdById], references: [id])
+  items    OrderItem[]
+  table    Table? @relation(fields: [tableId], references: [id])
+
+  @@index([tenantId, branchId, updatedAt(sort: Desc)])
+  @@index([tenantId, branchId, status, createdAt(sort: Desc)])
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  orderId    String
+  menuItemId String
+  quantity   Int
+  price      Float
+  status     OrderItemStatus @default(PENDING)
+
+  order     Order    @relation(fields: [orderId], references: [id])
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+enum PaymentMode {
+  CASH
+  QR
+  CARD
+}
+
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  CREDIT
+}
+
+enum OrderItemStatus {
+  PENDING
+  PREPARING
+  READY
+  SERVED
+  CANCELLED
+}
+
+enum PaymentType {
+  FULL
+  BILL_SPLITTING
+  PARTIAL
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+}
+
+model Area {
+  id          String   @id @default(uuid())
+  tenantId    String
+  branchId    String?
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  tables Table[]
+}
+
+model Table {
+  id        String      @id @default(uuid())
+  tenantId  String
+  branchId  String?
+  areaId    String
+  code      String
+  capacity  Int
+  status    TableStatus @default(AVAILABLE)
+  isActive  Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  area   Area    @relation(fields: [areaId], references: [id])
+  orders Order[]
+}
+
+model Combo {
+  id          String   @id @default(uuid())
+  tenantId    String
+  branchId    String?
+  name        String
+  price       Float
+  description String?
+  imageUrl    String?
+  items       Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+enum CustomerType {
+  CUSTOMER
+  CREDITOR
+}
+
+model Customer {
+  id            String       @id @default(uuid())
+  tenantId      String
+  branchId      String?
+  name          String
+  phone         String?
+  email         String?
+  address       String?
+  notes         String?
+  type          CustomerType @default(CUSTOMER)
+  creditBalance Float       @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  branch            Branch?            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  creditTransactions CreditTransaction[]
+}
+
+enum CreditTransactionType {
+  CREDIT
+  PAYMENT
+}
+
+model CreditTransaction {
+  id          String                @id @default(uuid())
+  customerId  String
+  tenantId    String
+  amount      Float
+  type        CreditTransactionType
+  balanceAfter Float
+  note        String?
+  createdAt   DateTime              @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum DiscountScope {
+  ALL
+  CATEGORY
+  ITEM
+}
+
+model Discount {
+  id             String         @id @default(uuid())
+  tenantId       String
+  branchId       String?
+  name           String
+  code           String?
+  type           DiscountType
+  value          Float
+  scope          DiscountScope  @default(ALL)
+  categoryIds    Json?
+  menuItemIds    Json?
+  minOrderAmount Float?
+  validFrom      DateTime?
+  validTo        DateTime?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  tenantId  String
+  branchId  String?
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch   Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  purchases VendorPurchase[]
+}
+
+model VendorPurchase {
+  id          String   @id @default(uuid())
+  vendorId    String
+  tenantId    String
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  note        String?
+  createdAt   DateTime @default(now())
+
+  vendor Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  items  VendorPurchaseItem[]
+}
+
+model VendorPurchaseItem {
+  id                 String   @id @default(uuid())
+  vendorPurchaseId   String
+  productName       String
+  quantity          Float
+  unitPrice         Float
+  inventoryProductId String?  // optional: add this quantity to inventory when purchase is created
+
+  purchase VendorPurchase @relation(fields: [vendorPurchaseId], references: [id], onDelete: Cascade)
+}
+
+model InventoryProduct {
+  id              String   @id @default(uuid())
+  tenantId        String
+  branchId        String?
+  name            String
+  unit            String   // e.g. "kg", "L", "pcs"
+  currentQuantity Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch   Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  usages   MenuItemInventoryUsage[]
+  history  InventoryStockHistory[]
+}
+
+model MenuItemInventoryUsage {
+  id                 String  @id @default(uuid())
+  menuItemId         String
+  inventoryProductId String
+  quantityPerUnit    Float   // amount of this product used per 1 unit of menu item
+
+  menuItem  MenuItem        @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  inventory InventoryProduct @relation(fields: [inventoryProductId], references: [id], onDelete: Cascade)
+
+  @@unique([menuItemId, inventoryProductId])
+}
+
+enum InventoryStockHistoryType {
+  PURCHASE   // from vendor / add stock
+  SALE       // deducted by order
+  ADJUSTMENT // manual add/remove
+}
+
+model InventoryStockHistory {
+  id                 String                   @id @default(uuid())
+  inventoryProductId String
+  quantityChange     Float    // positive = added, negative = deducted
+  type               InventoryStockHistoryType
+  referenceId        String?  // orderId or vendorPurchaseId when applicable
+  note               String?
+  createdAt          DateTime @default(now())
+
+  inventory InventoryProduct @relation(fields: [inventoryProductId], references: [id], onDelete: Cascade)
+}
+
+/// Stores OTPs and email verification state for registration flows.
+model EmailOtp {
+  id                    String   @id @default(uuid())
+  /// Normalized email (lowercase + trimmed).
+  email                 String   @unique
+  /// Hashed OTP value (never store raw OTP).
+  otpHash               String
+  /// When this OTP stops being valid for verification.
+  expiresAt             DateTime
+  /// Number of failed verification attempts.
+  attemptCount          Int      @default(0)
+  /// When the last OTP was sent – used for basic rate limiting.
+  lastSentAt            DateTime @default(now())
+  /// When the email was successfully verified.
+  verifiedAt            DateTime?
+  /// Short‑lived flag for “email_verified:<email>” semantics.
+  verificationExpiresAt DateTime?
+  createdAt             DateTime @default(now())
+}

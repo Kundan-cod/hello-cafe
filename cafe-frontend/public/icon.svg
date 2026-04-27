@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hello Café">
+  <rect width="512" height="512" rx="96" fill="#b91c1c"/>
+  <rect x="44" y="44" width="424" height="424" rx="88" fill="rgba(255,255,255,0.14)"/>
+  <g fill="#ffffff">
+    <path d="M176 216c0-8.8 7.2-16 16-16h136c8.8 0 16 7.2 16 16v56c0 48.6-39.4 88-88 88h-40c-48.6 0-88-39.4-88-88v-56zm32 16v40c0 30.9 25.1 56 56 56h40c30.9 0 56-25.1 56-56v-40H208z"/>
+    <path d="M352 232h24c30.9 0 56 25.1 56 56s-25.1 56-56 56h-33.8c7.3-9.7 12.8-20.8 16.1-32H376c13.3 0 24-10.7 24-24s-10.7-24-24-24h-24v-32z"/>
+    <path d="M208 384h152v24c0 13.3-10.7 24-24 24H232c-13.3 0-24-10.7-24-24v-24z"/>
+  </g>
+  <text x="256" y="176" font-family="system-ui,Segoe UI,Arial" font-size="72" font-weight="800" text-anchor="middle" fill="#ffffff">HC</text>
+</svg>
+

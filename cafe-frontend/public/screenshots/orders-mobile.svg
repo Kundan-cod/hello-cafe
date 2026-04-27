@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 1334" role="img" aria-label="Hello Cafe mobile orders screen">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="750" height="1334" fill="url(#bg)"/>
+  <rect x="40" y="32" width="670" height="120" rx="24" fill="#ffffff"/>
+  <text x="80" y="102" font-family="Segoe UI,Arial,sans-serif" font-size="42" font-weight="700" fill="#0f172a">Hello Cafe</text>
+  <text x="80" y="138" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#64748b">Orders Dashboard</text>
+
+  <rect x="40" y="184" width="670" height="240" rx="24" fill="#ffffff"/>
+  <text x="72" y="244" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="600" fill="#0f172a">Order #1241</text>
+  <text x="72" y="288" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#475569">2x Cappuccino, 1x Sandwich</text>
+  <rect x="520" y="214" width="150" height="58" rx="14" fill="#16a34a"/>
+  <text x="595" y="252" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#ffffff">PAID</text>
+
+  <rect x="40" y="456" width="670" height="240" rx="24" fill="#ffffff"/>
+  <text x="72" y="516" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="600" fill="#0f172a">Order #1242</text>
+  <text x="72" y="560" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#475569">1x Mocha, 2x Donut</text>
+  <rect x="500" y="486" width="170" height="58" rx="14" fill="#ea580c"/>
+  <text x="585" y="524" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#ffffff">PENDING</text>
+
+  <rect x="40" y="728" width="670" height="240" rx="24" fill="#ffffff"/>
+  <text x="72" y="788" font-family="Segoe UI,Arial,sans-serif" font-size="30" font-weight="600" fill="#0f172a">Order #1243</text>
+  <text x="72" y="832" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#475569">3x Tea, 1x Cookie</text>
+  <rect x="500" y="758" width="170" height="58" rx="14" fill="#2563eb"/>
+  <text x="585" y="796" text-anchor="middle" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="700" fill="#ffffff">BILLING</text>
+
+  <rect x="40" y="1000" width="670" height="280" rx="24" fill="#ffffff"/>
+  <text x="72" y="1060" font-family="Segoe UI,Arial,sans-serif" font-size="28" font-weight="600" fill="#0f172a">Today Summary</text>
+  <text x="72" y="1110" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#334155">Orders: 126</text>
+  <text x="72" y="1152" font-family="Segoe UI,Arial,sans-serif" font-size="24" fill="#334155">Revenue: NPR 58,200</text>
+</svg>

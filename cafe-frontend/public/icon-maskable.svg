@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hello Cafe Maskable Icon">
+  <rect width="512" height="512" fill="#b91c1c"/>
+  <circle cx="256" cy="256" r="208" fill="rgba(255,255,255,0.12)"/>
+  <g fill="#ffffff">
+    <path d="M168 206c0-8.8 7.2-16 16-16h144c8.8 0 16 7.2 16 16v58c0 52-42 94-94 94h-38c-52 0-94-42-94-94v-58zm32 16v42c0 34.3 27.7 62 62 62h38c34.3 0 62-27.7 62-62v-42H200z"/>
+    <path d="M346 226h22c33.1 0 60 26.9 60 60s-26.9 60-60 60h-35.3c7.4-10.2 13-21.7 16.5-34H368c14.4 0 26-11.6 26-26s-11.6-26-26-26h-22v-34z"/>
+    <path d="M200 386h156v22c0 13.3-10.7 24-24 24H224c-13.3 0-24-10.7-24-24v-22z"/>
+  </g>
+  <text x="256" y="172" font-family="system-ui,Segoe UI,Arial" font-size="72" font-weight="800" text-anchor="middle" fill="#ffffff">HC</text>
+</svg>
