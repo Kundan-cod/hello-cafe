@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: cafe-backend
+    env: node
+    buildCommand: cd cafe-backend && npm install && npx prisma generate && npm run build
+    startCommand: cd cafe-backend && npx prisma migrate deploy && node dist/main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hello-cafe-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://cafe-frontend.onrender.com # Placeholder, will update after frontend deploy
+
+  - type: web
+    name: cafe-frontend
+    env: node
+    buildCommand: cd cafe-frontend && npm install && npm run build
+    startCommand: cd cafe-frontend && npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://cafe-backend.onrender.com # Placeholder, will update after backend deploy
+
+databases:
+  - name: hello-cafe-db
+    databaseName: hello_cafe
+    user: cafe_user
