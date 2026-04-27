@@ -83,7 +83,7 @@ export class BranchesService {
       where: { id: tenantId },
       select: { orderManagementType: true },
     });
-    const orderManagementType: string =
+    const orderManagementType =
       tenant?.orderManagementType ?? 'TABLE_BASED';
 
     const branch = await this.prisma.branch.create({
